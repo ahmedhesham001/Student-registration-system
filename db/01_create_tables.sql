@@ -1,4 +1,4 @@
-DROP DATABASE IF EXISTS student_registration_system;
+
 
 CREATE DATABASE IF NOT EXISTS student_registration_system;
 USE student_registration_system;
