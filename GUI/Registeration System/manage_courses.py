@@ -9,6 +9,16 @@ class ManageCoursesPage(tk.Frame):
         # Title
         tk.Label(self, text="Manage Courses", font=("Arial", 24)).pack(pady=20)
         
+        # Search Frame
+        search_frame = tk.Frame(self)
+        search_frame.pack(pady=10)
+        
+        tk.Label(search_frame, text="Search:").pack(side=tk.LEFT, padx=5)
+        self.search_entry = tk.Entry(search_frame)
+        self.search_entry.pack(side=tk.LEFT, padx=5)
+        tk.Button(search_frame, text="Search", command=self.search_courses).pack(side=tk.LEFT, padx=5)
+        tk.Button(search_frame, text="Show All", command=self.load_data).pack(side=tk.LEFT, padx=5)
+        
         # Treeview Frame
         tree_frame = tk.Frame(self)
         tree_frame.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
@@ -46,25 +56,25 @@ class ManageCoursesPage(tk.Frame):
         input_frame = tk.Frame(self)
         input_frame.pack(pady=20)
                 
-        tk.Label(input_frame, text="Code").grid(row=0, column=2, padx=5)
+        tk.Label(input_frame, text="Code").grid(row=0, column=1, padx=5)
         self.code_entry = tk.Entry(input_frame)
-        self.code_entry.grid(row=0, column=3, padx=5)
+        self.code_entry.grid(row=0, column=2, padx=5)
         
-        tk.Label(input_frame, text="Name").grid(row=0, column=4, padx=5)
+        tk.Label(input_frame, text="Name").grid(row=0, column=3, padx=5)
         self.name_entry = tk.Entry(input_frame)
-        self.name_entry.grid(row=0, column=5, padx=5)
+        self.name_entry.grid(row=0, column=4, padx=5)
         
-        tk.Label(input_frame, text="Credit").grid(row=1, column=0, padx=5, pady=10)
+        tk.Label(input_frame, text="Credit").grid(row=1, column=1, padx=5, pady=10)
         self.credit_entry = tk.Entry(input_frame)
-        self.credit_entry.grid(row=1, column=1, padx=5, pady=10)
+        self.credit_entry.grid(row=1, column=2, padx=5, pady=10)
         
-        tk.Label(input_frame, text="Instructor ID").grid(row=1, column=2, padx=5, pady=10)
+        tk.Label(input_frame, text="Instructor ID").grid(row=1, column=3, padx=5, pady=10)
         self.instructor_id_entry = tk.Entry(input_frame)
-        self.instructor_id_entry.grid(row=1, column=3, padx=5, pady=10)
+        self.instructor_id_entry.grid(row=1, column=4, padx=5, pady=10)
         
-        tk.Button(input_frame, text="Add Course", command=self.add_course).grid(row=1, column=4, padx=5, pady=10)
-        tk.Button(input_frame, text="Update Course", command=self.update_course).grid(row=1, column=5, padx=5, pady=10)
-        tk.Button(input_frame, text="Delete Course", command=self.delete_course).grid(row=1, column=6, padx=5, pady=10)
+        tk.Button(input_frame, text="Add Course", command=self.add_course).grid(row=2, column=2, padx=5, pady=10)
+        tk.Button(input_frame, text="Update Course", command=self.update_course).grid(row=2, column=3, padx=5, pady=10)
+        tk.Button(input_frame, text="Delete Course", command=self.delete_course).grid(row=2, column=4, padx=5, pady=10)
         
         # Back Button
         tk.Button(self, text="Back", command=self.go_back).pack(pady=10)
@@ -255,7 +265,12 @@ class ManageCoursesPage(tk.Frame):
         # Load Data
         self.load_data()
 
-    def load_data(self):
+    def search_courses(self):
+        query = self.search_entry.get()
+        self.load_data(query)
+        self.search_entry.delete(0, tk.END)
+
+    def load_data(self, search_query=None):
         # Clear existing data
         for item in self.tree.get_children():
             self.tree.delete(item)
@@ -264,7 +279,12 @@ class ManageCoursesPage(tk.Frame):
         if conn:
             try:
                 cursor = conn.cursor()
-                cursor.execute("SELECT * FROM courses")
+                if search_query:
+                    query = "SELECT * FROM courses WHERE code LIKE %s "
+                    cursor.execute(query, (f"%{search_query}%",))
+                else:
+                    cursor.execute("SELECT * FROM courses")
+                
                 rows = cursor.fetchall()
                 for row in rows:
                     self.tree.insert("", tk.END, values=row)
