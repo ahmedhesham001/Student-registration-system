@@ -10,7 +10,7 @@ class App(tk.Tk):
         Pages = [AdminPage, LoginPage, ManageStudentsPage, ManageCoursesPage, ManageEnrollmentsPage]
         super().__init__()
         self.title('Registration System')
-        self.geometry('800x500')
+        self.geometry('800x800')
         self.frames = {}
         for Page in Pages:
             frame = Page(self)

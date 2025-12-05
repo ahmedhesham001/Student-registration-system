@@ -9,6 +9,16 @@ class ManageEnrollmentsPage(tk.Frame):
         # Title
         tk.Label(self, text="Manage Enrollments", font=("Arial", 24)).pack(pady=20)
         
+        # Search Frame
+        search_frame = tk.Frame(self)
+        search_frame.pack(pady=10)
+        
+        tk.Label(search_frame, text="Search:").pack(side=tk.LEFT, padx=5)
+        self.search_entry = tk.Entry(search_frame)
+        self.search_entry.pack(side=tk.LEFT, padx=5)
+        tk.Button(search_frame, text="Search", command=self.search_enrollments).pack(side=tk.LEFT, padx=5)
+        tk.Button(search_frame, text="Show All", command=self.load_data).pack(side=tk.LEFT, padx=5)
+        
         # Treeview Frame
         tree_frame = tk.Frame(self)
         tree_frame.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
@@ -308,7 +318,12 @@ class ManageEnrollmentsPage(tk.Frame):
                     conn.close()
         
         tk.Button(dialog, text="Submit", command=submit).pack(pady=10)
-    def load_data(self):
+    def search_enrollments(self):
+        query = self.search_entry.get()
+        self.load_data(query)
+        self.search_entry.delete(0, tk.END)
+
+    def load_data(self, search_query=None):
         # Clear existing data
         for item in self.tree.get_children():
             self.tree.delete(item)
@@ -317,11 +332,32 @@ class ManageEnrollmentsPage(tk.Frame):
         if conn:
             try:
                 cursor = conn.cursor()
-                cursor.execute("SELECT e.id, s.first_name, s.last_name, c.code, e.enrollment_date, e.gpa, e.semester FROM enrollments e, students s, courses c WHERE e.student_id = s.id AND e.course_id = c.id")
+                if search_query:
+                    query = """
+                        SELECT e.id, s.first_name, s.last_name, c.code, e.enrollment_date, e.gpa, e.semester 
+                        FROM enrollments e, students s, courses c 
+                        WHERE e.student_id = s.id AND e.course_id = c.id 
+                        AND (
+                            CAST(e.id AS CHAR) LIKE %s OR
+                            CAST(e.student_id AS CHAR) LIKE %s OR
+                            c.code LIKE %s
+                        )
+                    """
+                    cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
+                else:
+                    cursor.execute("SELECT e.id, s.first_name, s.last_name, c.code, e.enrollment_date, e.gpa, e.semester FROM enrollments e, students s, courses c WHERE e.student_id = s.id AND e.course_id = c.id")
+                
                 rows = cursor.fetchall()
+                
+                if not rows and search_query:
+                    from tkinter import messagebox
+                    messagebox.showinfo("Search", "No records found matching your query.")
+                
                 for row in rows:
                     self.tree.insert("", tk.END, values=(row[0], row[1] + " " + row[2], row[3], row[4], row[5], row[6]))
             except Exception as e:
+                from tkinter import messagebox
+                messagebox.showerror("Error", f"Error loading data: {e}")
                 print(f"Error loading data: {e}")
             finally:
                 conn.close()

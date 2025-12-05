@@ -9,6 +9,16 @@ class ManageStudentsPage(tk.Frame):
         # Title
         tk.Label(self, text="Manage Students", font=("Arial", 24)).pack(pady=20)
         
+        # Search Frame
+        search_frame = tk.Frame(self)
+        search_frame.pack(pady=10)
+        
+        tk.Label(search_frame, text="Search:").pack(side=tk.LEFT, padx=5)
+        self.search_entry = tk.Entry(search_frame)
+        self.search_entry.pack(side=tk.LEFT, padx=5)
+        tk.Button(search_frame, text="Search", command=self.search_students).pack(side=tk.LEFT, padx=5)
+        tk.Button(search_frame, text="Show All", command=self.load_data).pack(side=tk.LEFT, padx=5)
+        
         # Treeview Frame
         tree_frame = tk.Frame(self)
         tree_frame.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
@@ -48,13 +58,13 @@ class ManageStudentsPage(tk.Frame):
         input_frame = tk.Frame(self)
         input_frame.pack(pady=20)
         
-        tk.Label(input_frame, text="Name").grid(row=0, column=2, padx=5)
+        tk.Label(input_frame, text="Name").grid(row=0, column=0, padx=5)
         self.name_entry = tk.Entry(input_frame)
-        self.name_entry.grid(row=0, column=3, padx=5)
+        self.name_entry.grid(row=0, column=1, padx=5)
         
-        tk.Label(input_frame, text="Phone").grid(row=0, column=4, padx=5)
+        tk.Label(input_frame, text="Phone").grid(row=0, column=2, padx=5)
         self.phone_entry = tk.Entry(input_frame)
-        self.phone_entry.grid(row=0, column=5, padx=5)
+        self.phone_entry.grid(row=0, column=3, padx=5)
         
         tk.Label(input_frame, text="Email").grid(row=1, column=0, padx=5, pady=10)
         self.email_entry = tk.Entry(input_frame)
@@ -64,13 +74,13 @@ class ManageStudentsPage(tk.Frame):
         self.academic_year_entry = tk.Entry(input_frame)
         self.academic_year_entry.grid(row=1, column=3, padx=5, pady=10)
         
-        tk.Label(input_frame, text="Department").grid(row=1, column=4, padx=5, pady=10)
+        tk.Label(input_frame, text="Department").grid(row=0, column=4, padx=5, pady=10)
         self.department_entry = tk.Entry(input_frame)
-        self.department_entry.grid(row=1, column=5, padx=5, pady=10)
+        self.department_entry.grid(row=0, column=5, padx=5, pady=10)
         
-        tk.Button(input_frame, text="Add Student", command=self.add_student).grid(row=2, column=3, padx=5, pady=10)
-        tk.Button(input_frame, text="Update Student", command=self.update_student).grid(row=2, column=4, padx=5, pady=10)
-        tk.Button(input_frame, text="Delete Student", command=self.delete_student).grid(row=2, column=5, padx=5, pady=10)
+        tk.Button(input_frame, text="Add Student", command=self.add_student).grid(row=2, column=2, padx=5, pady=10)
+        tk.Button(input_frame, text="Update Student", command=self.update_student).grid(row=2, column=3, padx=5, pady=10)
+        tk.Button(input_frame, text="Delete Student", command=self.delete_student).grid(row=2, column=4, padx=5, pady=10)
         
         # Back Button
         tk.Button(self, text="Back", command=self.go_back).pack(pady=0)
@@ -284,7 +294,12 @@ class ManageStudentsPage(tk.Frame):
         # Load Data
         self.load_data()
 
-    def load_data(self):
+    def search_students(self):
+        query = self.search_entry.get()
+        self.load_data(query)
+        self.search_entry.delete(0, tk.END)
+
+    def load_data(self, search_query=None):
         # Clear existing data
         for item in self.tree.get_children():
             self.tree.delete(item)
@@ -293,7 +308,17 @@ class ManageStudentsPage(tk.Frame):
         if conn:
             try:
                 cursor = conn.cursor()
-                cursor.execute("SELECT s.id, s.first_name, s.last_name, s.phone, s.email, s.academic_year, d.name FROM students s JOIN departments d ON s.department_id = d.id")
+                if search_query:
+                    query = """
+                        SELECT s.id, s.first_name, s.last_name, s.phone, s.email, s.academic_year, d.name 
+                        FROM students s 
+                        JOIN departments d ON s.department_id = d.id 
+                        WHERE s.id LIKE %s
+                    """
+                    cursor.execute(query, (f"%{search_query}%",))
+                else:
+                    cursor.execute("SELECT s.id, s.first_name, s.last_name, s.phone, s.email, s.academic_year, d.name FROM students s JOIN departments d ON s.department_id = d.id")
+                
                 rows = cursor.fetchall()
                 for row in rows:
                     self.tree.insert("", tk.END, values=(row[0], row[1]+" "+row[2], row[3], row[4], row[5], row[6]))
