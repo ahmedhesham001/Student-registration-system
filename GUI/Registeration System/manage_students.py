@@ -248,7 +248,6 @@ class ManageStudentsPage(tk.Frame):
         tk.Button(dialog, text="Update", command=submit).pack(pady=20)
 
     def add_student(self):
-        # student_id is auto-incremented, so we don't need to get it from entry
         name = self.name_entry.get()
         phone = self.phone_entry.get()
         email = self.email_entry.get()
